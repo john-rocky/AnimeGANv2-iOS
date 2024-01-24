@@ -60,8 +60,6 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             processing = false
             return
         }
-        processing = true
-        
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,orientation: .right, options: [:])
         do {
             try handler.perform([coreMLRequest])
@@ -75,42 +73,20 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             processing = false
             return }
         let end = Date()
-        let inferenceTime = end.timeIntervalSince(startTime)
+//        let inferenceTime = end.timeIntervalSince(startTime)
         let pixelBuffer:CVPixelBuffer = result.pixelBuffer
         let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
         let resizedCIImage = resultCIImage.resize(as: videoSize)
         let resultUIImage = UIImage(ciImage: resizedCIImage)
         if isRecording {
-            
-            let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(currentSampleBuffer)
-            let duration = CMSampleBufferGetDuration(currentSampleBuffer)
-            
-            
-            print(videoWriter.status.rawValue)
-            if videoWriter.status == .unknown {
-                
-                if videoWriter.startWriting() {
-                    recordingStartTime = presentationTimeStamp
-                    videoWriter.startSession(atSourceTime: presentationTimeStamp)
-                }
-            }
-            
-            if self.videoWriter.status == .writing,
-               self.videoWriterVideoInput.isReadyForMoreMediaData == true {
-                var pixelBufferOut: CVPixelBuffer?
-                CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, videoWriterPixelBufferAdaptor.pixelBufferPool!, &pixelBufferOut)
-                self.ciContext.render(resizedCIImage, to: pixelBufferOut!)
-                let spanTime = CMTimeSubtract(recordingStartTime!, presentationTimeStamp)
-                self.videoWriterPixelBufferAdaptor.append(pixelBufferOut!, withPresentationTime: presentationTimeStamp)
-            }
-            
+            writeProcessedVideoFrame(processedCIImage: resizedCIImage, sampleBuffer: currentSampleBuffer)
         }
-        
-        processing = false
-        
+
         DispatchQueue.main.async { [weak self] in
             self?.imageView.image = resultUIImage
         }
+        processing = false
+
     }
     
     // MARK: -Video
@@ -153,46 +129,26 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             
             
             if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) { // this is a video frame
-                
-                //               let processedCIImage = processVideoFrame(pixelBuffer: pixelBuffer) {
-                
-                // Update preview
-                updatePreview(processedCIImage: CIImage(cvPixelBuffer: pixelBuffer))
+                currentSampleBuffer = sampleBuffer
+//                guard let processedCIImage = processVideoFrame(pixelBuffer: pixelBuffer) else {
+//                    return
+//                }
+                inference(pixelBuffer: pixelBuffer)
+
+//                // Update preview
+//                updatePreview(processedCIImage: processedCIImage)
                 
                 if isRecording {
                     //                        DispatchQueue.global(qos: .userInitiated).async {
 
-                    let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                    print(presentationTimeStamp)
-                    let duration = CMSampleBufferGetDuration(sampleBuffer)
-//                    if videoWriter.status == .unknown {
-//                            self.videoWriter.startWriting()
-//                            self.videoWriter.startSession(atSourceTime: presentationTimeStamp)
-////                        }
-//                        
-//                    }
-                    print(videoWriter.status.rawValue)
-//                    if self.videoWriter.status == .writing,
-//                       self.videoWriterVideoInput.isReadyForMoreMediaData == true {
-                        
-                        // CIImage -> CVPixelBuffer
-//                        var processedPixelBuffer: CVPixelBuffer?
-//                        CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, videoWriterPixelBufferAdaptor.pixelBufferPool!, &processedPixelBuffer)
-//                        self.ciContext.render(processedCIImage, to: processedPixelBuffer!)
-//                        guard let processedPixelBuffer = processedPixelBuffer else { return }
-                        
-                        // write
-//                        self.videoWriterPixelBufferAdaptor.append(pixelBuffer, withPresentationTime: presentationTimeStamp)
-//                    }
-                    
-                    writeProcessedVideoFrame(processedCIImage: CIImage(cvPixelBuffer: pixelBuffer), sampleBuffer: sampleBuffer)
+//                    let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+//                    print(presentationTimeStamp)
+//                    print(videoWriter.status.rawValue)
+//                    
+//                    writeProcessedVideoFrame(processedCIImage: processedCIImage, sampleBuffer: sampleBuffer)
                 }
             }
-            processing = false
-            //            currentSampleBuffer = sampleBuffer
-            //            startTime = Date()
-            //            inference(pixelBuffer: pixelBuffer)
-            
+//            processing = false
         } else if let audioDataOutput = output as? AVCaptureAudioDataOutput {
             if isRecording ,
             let recordingStartTime = recordingStartTime{
@@ -243,9 +199,11 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     }
     
     func updatePreview(processedCIImage: CIImage) {
-        
-        let processedUIImage = UIImage(ciImage: processedCIImage)
+        let cgImage = ciContext.createCGImage(processedCIImage, from: processedCIImage.extent)
+
+        let processedUIImage = UIImage(cgImage: cgImage!)
         DispatchQueue.main.async {
+
             self.imageView.image = processedUIImage
         }
     }
@@ -265,7 +223,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             
             // video output
             captureVideoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-            captureVideoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.main)
+            captureVideoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.global(qos: .userInitiated))
             if captureSession.canAddOutput(captureVideoOutput) {
                 captureSession.addOutput(captureVideoOutput)
             }
@@ -310,7 +268,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             AVVideoWidthKey: videoSize.width,
             AVVideoHeightKey: videoSize.height
         ]
-        videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: captureVideoOutput.recommendedVideoSettingsForAssetWriter(writingTo: .mov))
+        videoWriterVideoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoOutputSettings)
         videoWriterVideoInput.expectsMediaDataInRealTime = true
         
         // use adaptor for write processed pixelbuffer
