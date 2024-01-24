@@ -9,13 +9,17 @@
 /* Begin PBXBuildFile section */
 		73B094592B5BBF140053F9F6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094582B5BBF140053F9F6 /* AppDelegate.swift */; };
 		73B0945B2B5BBF140053F9F6 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0945A2B5BBF140053F9F6 /* SceneDelegate.swift */; };
-		73B0945D2B5BBF140053F9F6 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0945C2B5BBF140053F9F6 /* ViewController.swift */; };
+		73B0945D2B5BBF140053F9F6 /* SingleImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0945C2B5BBF140053F9F6 /* SingleImageViewController.swift */; };
 		73B094602B5BBF140053F9F6 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 73B0945E2B5BBF140053F9F6 /* Main.storyboard */; };
 		73B094622B5BBF150053F9F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73B094612B5BBF150053F9F6 /* Assets.xcassets */; };
 		73B094652B5BBF150053F9F6 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 73B094632B5BBF150053F9F6 /* LaunchScreen.storyboard */; };
 		73B094702B5BBF160053F9F6 /* AnimeGANv2SampleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0946F2B5BBF160053F9F6 /* AnimeGANv2SampleTests.swift */; };
 		73B0947A2B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094792B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift */; };
 		73B0947C2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0947B2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift */; };
+		73B094892B5BBF690053F9F6 /* animeganHayao.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */; };
+		73B0948B2B5BF5CC0053F9F6 /* ImageExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */; };
+		73B0948D2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */; };
+		73B094912B5CC9090053F9F6 /* VideoProcessingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -39,7 +43,7 @@
 		73B094552B5BBF140053F9F6 /* AnimeGANv2Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AnimeGANv2Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		73B094582B5BBF140053F9F6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		73B0945A2B5BBF140053F9F6 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
-		73B0945C2B5BBF140053F9F6 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		73B0945C2B5BBF140053F9F6 /* SingleImageViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleImageViewController.swift; sourceTree = "<group>"; };
 		73B0945F2B5BBF140053F9F6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		73B094612B5BBF150053F9F6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		73B094642B5BBF150053F9F6 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -49,6 +53,10 @@
 		73B094752B5BBF160053F9F6 /* AnimeGANv2SampleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnimeGANv2SampleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		73B094792B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeGANv2SampleUITests.swift; sourceTree = "<group>"; };
 		73B0947B2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeGANv2SampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = animeganHayao.mlmodel; sourceTree = "<group>"; };
+		73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageExtensions.swift; sourceTree = "<group>"; };
+		73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealTimeCameraInferenceViewController.swift; sourceTree = "<group>"; };
+		73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcessingViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,7 +109,11 @@
 			children = (
 				73B094582B5BBF140053F9F6 /* AppDelegate.swift */,
 				73B0945A2B5BBF140053F9F6 /* SceneDelegate.swift */,
-				73B0945C2B5BBF140053F9F6 /* ViewController.swift */,
+				73B0945C2B5BBF140053F9F6 /* SingleImageViewController.swift */,
+				73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */,
+				73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */,
+				73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */,
+				73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */,
 				73B0945E2B5BBF140053F9F6 /* Main.storyboard */,
 				73B094612B5BBF150053F9F6 /* Assets.xcassets */,
 				73B094632B5BBF150053F9F6 /* LaunchScreen.storyboard */,
@@ -258,9 +270,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				73B0945D2B5BBF140053F9F6 /* ViewController.swift in Sources */,
+				73B0948D2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift in Sources */,
+				73B094912B5CC9090053F9F6 /* VideoProcessingViewController.swift in Sources */,
+				73B0948B2B5BF5CC0053F9F6 /* ImageExtensions.swift in Sources */,
+				73B0945D2B5BBF140053F9F6 /* SingleImageViewController.swift in Sources */,
 				73B094592B5BBF140053F9F6 /* AppDelegate.swift in Sources */,
 				73B0945B2B5BBF140053F9F6 /* SceneDelegate.swift in Sources */,
+				73B094892B5BBF690053F9F6 /* animeganHayao.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -445,11 +461,13 @@
 				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnimeGANv2Sample/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -473,11 +491,13 @@
 				DEVELOPMENT_TEAM = MFN25KNUGJ;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnimeGANv2Sample/Info.plist;
+				INFOPLIST_KEY_NSCameraUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
