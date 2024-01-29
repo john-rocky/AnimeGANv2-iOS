@@ -14,7 +14,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     
     var vnCoreMLModel: VNCoreMLModel! {
         didSet {
-            let coreMLRequest = VNCoreMLRequest(model: vnCoreMLModel, completionHandler: coreMLRequestCompletionHandler)
+            let coreMLRequest = VNCoreMLRequest(model: vnCoreMLModel)
             coreMLRequest.imageCropAndScaleOption = .scaleFill
             self.coreMLRequest = coreMLRequest
             DispatchQueue.main.async { [weak self] in
@@ -24,12 +24,22 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     }
     private var coreMLRequest: VNCoreMLRequest?
     
-    // Capture
+    // capture
     private var captureSession = AVCaptureSession()
     private var captureVideoOutput = AVCaptureVideoDataOutput()
     private let captureAudioOutput = AVCaptureAudioDataOutput()
     
-    // Video Writing
+    private enum CameraMode {
+        case photo
+        case video
+    }
+    
+    private var cameraMode: CameraMode = .photo
+    
+    // take a photo
+    private var takingPhoto = false
+    
+    // video writing
     private var videoWriter:AVAssetWriter!
     private var videoWriterVideoInput:AVAssetWriterInput!
     private var videoWriterPixelBufferAdaptor:AVAssetWriterInputPixelBufferAdaptor!
@@ -43,11 +53,14 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     private var startTime:Date!
     private var recordingStartTime:CMTime?
     
-    // View
+    // view
     private var imageView = UIImageView()
     private var descriptionLabel = UILabel()
-    private var recordButton = UIButton()
-    
+    private var recordButton = CustomButton()
+    private var switchCameraButton = CustomButton()
+    private var photoVideoSegmentControl = UISegmentedControl(items: ["photo","video"])
+    let largeConfig = UIImage.SymbolConfiguration(pointSize: 30, weight: .regular, scale: .default)
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
@@ -55,43 +68,37 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         setupVideoWriter()
     }
     
-    private func inference(pixelBuffer: CVPixelBuffer) {
+    private func predict(pixelBuffer: CVPixelBuffer)->CIImage? {
         guard let coreMLRequest = coreMLRequest else {
             processing = false
-            return
+            return nil
         }
         let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,orientation: .right, options: [:])
         do {
             try handler.perform([coreMLRequest])
+            guard let result:VNPixelBufferObservation = coreMLRequest.results?.first as? VNPixelBufferObservation else {
+                processing = false
+                return nil}
+            let end = Date()
+            let inferenceTime = end.timeIntervalSince(startTime)
+            print(inferenceTime)
+            let pixelBuffer:CVPixelBuffer = result.pixelBuffer
+            let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
+            let resizedCIImage = resultCIImage.resize(as: videoSize)
+            return resizedCIImage
         } catch {
             print("Vision error: \(error.localizedDescription)")
+            return nil
         }
-    }
-    
-    func coreMLRequestCompletionHandler(request:VNRequest?, error:Error?) {
-        guard let result:VNPixelBufferObservation = coreMLRequest?.results?.first as? VNPixelBufferObservation else {
-            processing = false
-            return }
-        let end = Date()
-//        let inferenceTime = end.timeIntervalSince(startTime)
-        let pixelBuffer:CVPixelBuffer = result.pixelBuffer
-        let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let resizedCIImage = resultCIImage.resize(as: videoSize)
-        let resultUIImage = UIImage(ciImage: resizedCIImage)
-        if isRecording {
-            writeProcessedVideoFrame(processedCIImage: resizedCIImage, sampleBuffer: currentSampleBuffer)
-        }
-
-        DispatchQueue.main.async { [weak self] in
-            self?.imageView.image = resultUIImage
-        }
-        processing = false
-
     }
     
     // MARK: -Video
     
-    @objc func recordVideo() {
+    private func shootPhoto() {
+        
+    }
+    
+    private func recordVideo() {
         if isRecording {
             if videoWriter.status == .writing {
                 videoWriterVideoInput.markAsFinished()
@@ -99,59 +106,59 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                 videoWriter.finishWriting { [weak self] in
                     guard let self = self else { return }
                     let outputURL = self.videoWriter.outputURL
-                    self.saveVideoToPhotoLibrary(url: outputURL)
+                    saveVideoToPhotoLibrary(url: outputURL, completion: {  success, error in
+                        if success {
+                            self.presentAlert(title: "video saved!", message: "Saved in photo libraty!")
+                        } else {
+                            self.presentAlert(title: "failed to save video", message: String(describing: error))
+                        }
+                    })
                 }
             }
         } else {
             if videoWriter.status == .unknown {
-//                DispatchQueue.global(qos: .userInitiated).async {
-                    print("tapped")
-                    self.videoWriter.startWriting()
-                    print("startWriting")
-
-                    self.videoWriter.startSession(atSourceTime: .zero)
-                    print("startSession")
-
-//                }
+                self.videoWriter.startWriting()
+                self.videoWriter.startSession(atSourceTime: .zero)
             }
         }
         isRecording.toggle()
+        updateRecordingUI()
     }
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-
+        
         if let videoDataOutput = output as? AVCaptureVideoDataOutput,
            !processing {
             processing = true
-
+            
             // Proceed to processing only when the previous frame has finished processing
             // process a video frame here
             
-            
             if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) { // this is a video frame
                 currentSampleBuffer = sampleBuffer
-//                guard let processedCIImage = processVideoFrame(pixelBuffer: pixelBuffer) else {
-//                    return
-//                }
-                inference(pixelBuffer: pixelBuffer)
-
-//                // Update preview
-//                updatePreview(processedCIImage: processedCIImage)
+                startTime = Date()
+                guard let processedCIImage = predict(pixelBuffer: pixelBuffer) else {
+                    return
+                }
+                
+                // Update preview
+                updatePreview(processedCIImage: processedCIImage)
+                
+                if takingPhoto {
+                    takingPhoto = false
+                    
+                }
                 
                 if isRecording {
-                    //                        DispatchQueue.global(qos: .userInitiated).async {
-
-//                    let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-//                    print(presentationTimeStamp)
-//                    print(videoWriter.status.rawValue)
-//                    
-//                    writeProcessedVideoFrame(processedCIImage: processedCIImage, sampleBuffer: sampleBuffer)
+                    
+                    let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                    writeProcessedVideoFrame(processedCIImage: processedCIImage, presentationTimeStamp: presentationTimeStamp)
                 }
             }
-//            processing = false
+            processing = false
         } else if let audioDataOutput = output as? AVCaptureAudioDataOutput {
             if isRecording ,
-            let recordingStartTime = recordingStartTime{
+               let recordingStartTime = recordingStartTime{
                 if videoWriterAudioInput.isReadyForMoreMediaData,
                    videoWriter.status == .writing {
                     var copyBuffer : CMSampleBuffer?
@@ -160,24 +167,28 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                     CMSampleBufferGetSampleTimingInfoArray(sampleBuffer, entryCount: count, arrayToFill: &info, entriesNeededOut: &count)
                     info.presentationTimeStamp = CMTimeSubtract(info.presentationTimeStamp, recordingStartTime)
                     CMSampleBufferCreateCopyWithNewTiming(allocator: kCFAllocatorDefault,sampleBuffer: sampleBuffer,sampleTimingEntryCount: 1,sampleTimingArray: &info,sampleBufferOut: &copyBuffer)
-
+                    
                     videoWriterAudioInput.append(copyBuffer!)
                 }
             }
-            
         }
     }
     
-    func writeProcessedVideoFrame(processedCIImage: CIImage, sampleBuffer: CMSampleBuffer) {
+    private func saveProcessedImageInPhotoLibrary(processedCIImage: CIImage) {
+        guard let cgImage = ciContext.createCGImage(processedCIImage, from: processedCIImage.extent) else { fatalError("save error")}
+        let uiImage = UIImage(cgImage: cgImage)
+        UIImageWriteToSavedPhotosAlbum(uiImage, self, #selector(imageSaved), nil)
+    }
+    
+    private func writeProcessedVideoFrame(processedCIImage: CIImage, presentationTimeStamp: CMTime) {
         
         // get the time of this video frame.
-        let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         if self.videoWriter.status == .writing,
            self.videoWriterVideoInput.isReadyForMoreMediaData == true {
             if recordingStartTime == nil {
                 self.recordingStartTime = presentationTimeStamp
             }
-
+            
             // CIImage -> CVPixelBuffer
             var processedPixelBuffer: CVPixelBuffer?
             CVPixelBufferPoolCreatePixelBuffer(kCFAllocatorDefault, videoWriterPixelBufferAdaptor.pixelBufferPool!, &processedPixelBuffer)
@@ -189,21 +200,12 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     
-    func processVideoFrame(pixelBuffer: CVPixelBuffer) -> CIImage? {
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let ciFilter = CIFilter(name: "CIEdgeWork", parameters: [kCIInputImageKey: ciImage])
-        guard let processedCIImage = ciFilter?.outputImage else {
-            return nil
-        }
-        return processedCIImage
-    }
-    
-    func updatePreview(processedCIImage: CIImage) {
+    private func updatePreview(processedCIImage: CIImage) {
         let cgImage = ciContext.createCGImage(processedCIImage, from: processedCIImage.extent)
-
+        
         let processedUIImage = UIImage(cgImage: cgImage!)
         DispatchQueue.main.async {
-
+            
             self.imageView.image = processedUIImage
         }
     }
@@ -223,7 +225,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             
             // video output
             captureVideoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-            captureVideoOutput.setSampleBufferDelegate(self, queue: DispatchQueue.global(qos: .userInitiated))
+            captureVideoOutput.setSampleBufferDelegate(self, queue: DispatchQueue(label: "videoQueue"))
             if captureSession.canAddOutput(captureVideoOutput) {
                 captureSession.addOutput(captureVideoOutput)
             }
@@ -250,7 +252,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     
-
+    
     private func setupVideoWriter() {
         if recordingStartTime != nil {
             recordingStartTime = nil
@@ -292,54 +294,148 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     
-    func saveVideoToPhotoLibrary(url: URL) {
-        PHPhotoLibrary.requestAuthorization { status in
-            if status == .authorized {
-                PHPhotoLibrary.shared().performChanges({
-                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
-                }) { saved, error in
-                    DispatchQueue.main.async {
-                        if saved {
-                            print("Video saved in photo library")
-                            self.setupVideoWriter()
-                        } else {
-                            print("Failed saving: \(String(describing: error))")
-                        }
-                    }
+    // MARK: -User Interaction
+    
+    @objc func recordButtonTapped() {
+        switch cameraMode {
+        case .photo:
+            shootPhoto()
+        case .video:
+            recordVideo()
+        }
+    }
+    
+    @objc private func switchCamera() {
+        captureSession.beginConfiguration()
+
+        if let currentCameraInput = captureSession.inputs.first(where: { input in
+            if let deviceInput = input as? AVCaptureDeviceInput, deviceInput.device.hasMediaType(.video) {
+                return true
+            }
+            return false
+        }) as? AVCaptureDeviceInput {
+            captureSession.removeInput(currentCameraInput)
+
+            let newCameraPosition: AVCaptureDevice.Position = (currentCameraInput.device.position == .back) ? .front : .back
+            guard let newCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newCameraPosition) else {
+                captureSession.commitConfiguration()
+                return
+            }
+
+            do {
+                let newCameraInput = try AVCaptureDeviceInput(device: newCameraDevice)
+                if captureSession.canAddInput(newCameraInput) {
+                    captureSession.addInput(newCameraInput)
                 }
-            } else {
-                print("フォトライブラリへのアクセスが拒否されました")
+            } catch {
+                print("Error adding new camera input: \(error)")
+                captureSession.commitConfiguration()
+                return
             }
         }
+
+        captureSession.commitConfiguration()
+    }
+    
+    @objc func segmentControlValueChanged(sender: UISegmentedControl) {
+        if sender.tag == 0 { // photo
+            cameraMode = .photo
+        } else { // video
+            cameraMode = .video
+        }
+        switchUITo(mode: cameraMode)
     }
     
     // MARK: -View
     private func setupView() {
+        view.backgroundColor = .black
         imageView.frame = view.bounds
         descriptionLabel.frame = CGRect(x: 0, y: view.center.y, width: view.bounds.width, height: 100)
-        recordButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 150, width: 100, height: 100)
-        
+        recordButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 200, width: 100, height: 100)
+        switchCameraButton.frame = CGRect(x: view.bounds.maxX - 100, y: 100, width: 100, height: 100)
+        switchCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath.camera",withConfiguration: largeConfig), for: .normal)
+        photoVideoSegmentControl.frame =  CGRect(x: view.center.x - 50, y: view.bounds.maxY - 260, width: 100, height: 40)
         view.addSubview(imageView)
         view.addSubview(descriptionLabel)
         view.addSubview(recordButton)
+        view.addSubview(switchCameraButton)
+        view.addSubview(photoVideoSegmentControl)
         
         imageView.contentMode = .scaleAspectFit
         descriptionLabel.text = "Core ML model is initializing./n please wait a few seconds..."
         descriptionLabel.numberOfLines = 2
         descriptionLabel.textAlignment = .center
-        recordButton.setImage(UIImage(systemName: "video.circle.fill"), for: .normal)
-        recordButton.addTarget(self, action: #selector(recordVideo), for: .touchUpInside)
+        recordButton.addTarget(self, action: #selector(recordButtonTapped), for: .touchUpInside)
+        switchCameraButton.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
+        photoVideoSegmentControl.addTarget(self, action: #selector(segmentControlValueChanged), for: .valueChanged)
     }
     
+    private func updateRecordingUI() {
+        if isRecording {
+            DispatchQueue.main.async { [weak self] in
+                self?.recordButton.tintColor = .red
+                self?.switchCameraButton.isHidden = true
+                self?.photoVideoSegmentControl.isHidden = true
+            }
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.recordButton.tintColor = .white
+                self?.switchCameraButton.isHidden = false
+                self?.photoVideoSegmentControl.isHidden = false
+            }
+        }
+    }
+       
+    private func switchUITo(mode: CameraMode) {
+        DispatchQueue.main.async { [weak self] in
+            switch mode {
+            case .photo:
+                self?.recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
+                self?.switchCameraButton.isHidden = false
+            case .video:
+                self?.recordButton.setImage(UIImage(systemName: "video.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
+                self?.switchCameraButton.isHidden = true
+            }
+        }
+    }
+    // completion patern
     
-    /*
-     // MARK: - Navigation
-     
-     // In a storyboard-based application, you will often want to do a little preparation before navigation
-     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-     // Get the new view controller using segue.destination.
-     // Pass the selected object to the new view controller.
-     }
-     */
+    //    private func inference(pixelBuffer: CVPixelBuffer) {
+    //        guard let coreMLRequest = coreMLRequest else {
+    //            processing = false
+    //            return
+    //        }
+    //        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,orientation: .right, options: [:])
+    //        do {
+    //            try handler.perform([coreMLRequest])
+    //        } catch {
+    //            print("Vision error: \(error.localizedDescription)")
+    //            processing = false
+    //
+    //        }
+    //    }
+    
+    //    func coreMLRequestCompletionHandler(request:VNRequest?, error:Error?) {
+    //        guard let result:VNPixelBufferObservation = coreMLRequest?.results?.first as? VNPixelBufferObservation else {
+    //            processing = false
+    //            return }
+    //        let end = Date()
+    //        //        let inferenceTime = end.timeIntervalSince(startTime)
+    //        let pixelBuffer:CVPixelBuffer = result.pixelBuffer
+    //        let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
+    //        let resizedCIImage = resultCIImage.resize(as: videoSize)
+    //        let resultUIImage = UIImage(ciImage: resizedCIImage)
+    //        if isRecording {
+    //            writeProcessedVideoFrame(processedCIImage: resizedCIImage, sampleBuffer: currentSampleBuffer)
+    //        }
+    //
+    //        DispatchQueue.main.async { [weak self] in
+    //            self?.imageView.image = resultUIImage
+    //        }
+    //        processing = false
+    //
+    //    }
+    
     
 }
+

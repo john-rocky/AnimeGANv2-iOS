@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import PhotosUI
+
 
 extension CIImage {
     func resize(as size: CGSize) -> CIImage {
@@ -53,3 +55,26 @@ extension UIImage {
         return correctOrientationCIImage
     }
 }
+
+func saveVideoToPhotoLibrary(url: URL, completion: @escaping (Bool, Error?) -> Void) {
+    PHPhotoLibrary.requestAuthorization { status in
+        if status == .authorized {
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
+            }) { saved, error in
+                DispatchQueue.main.async {
+                    if saved {
+                        completion(true, nil)
+                    } else {
+                        completion(false, error)
+                    }
+                }
+            }
+        } else {
+            DispatchQueue.main.async {
+                completion(false, NSError(domain: "com.yourapp", code: 0, userInfo: [NSLocalizedDescriptionKey: "Access denied to photo library"]))
+            }
+        }
+    }
+}
+

@@ -19,25 +19,24 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
             coreMLRequest.imageCropAndScaleOption = .scaleFill
             coreMLRequest.preferBackgroundProcessing = true
             self.coreMLRequest = coreMLRequest
-            DispatchQueue.main.async { [weak self] in
-                self?.descriptionLabel.isHidden = true
-            }
         }
     }
     var coreMLRequest: VNCoreMLRequest!
     var originalCIImageSize = CGSize.zero
+    var processedVideoURL:URL?
     var descriptionLabel = UILabel()
+    var imageView = UIImageView()
+    var avPlayerView = AVPlayerView()
+    var videoButton = UIButton()
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupView()
         presentPicker()
+        
     }
     
     func performRequest(on image: CIImage) -> CIImage {
-        //        guard let coreMLRequest = self.coreMLRequest else { return nil }
-        //        let originalCIImageSize = originalCIImageSize
-        //        return await withCheckedContinuation { continuation in
-        //            DispatchQueue.global(qos: .userInitiated).async {
         let requestHandler = VNImageRequestHandler(ciImage: image, options: [:])
         do {
             try requestHandler.perform([coreMLRequest])
@@ -46,6 +45,9 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
             }
             let resultCIImage = CIImage(cvPixelBuffer: result.pixelBuffer)
             let resizedCIImage = resultCIImage.resize(as:originalCIImageSize)
+            DispatchQueue.main.async {
+                self.imageView.image = UIImage(ciImage: resizedCIImage)
+            }
             return resizedCIImage
         } catch {
             print("Error performing request: \(error)")
@@ -56,26 +58,46 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
     
     func processVideo(videoURL:URL) {
         let start = Date()
+        DispatchQueue.main.async { [weak self] in
+            self?.imageView.isHidden = false
+        }
         applyProcessingOnVideo(videoURL: videoURL) { ciImage in
             let processed = self.performRequest(on: ciImage)
             return processed
             
-        } _: { err, processedVideoURL in
+        } completion: { err, processedVideoURL in
             let end = Date()
             let diff = end.timeIntervalSince(start)
             print(diff)
-            let player = AVPlayer(url: processedVideoURL!)
+            guard let processedVideoURL = processedVideoURL else { return }
+            self.processedVideoURL = processedVideoURL
             DispatchQueue.main.async { [weak self] in
-                let controller = AVPlayerViewController()
-                controller.player = player
-                self?.present(controller, animated: true) {
-                    player.play()
-                }
+                guard let self = self else { return }
+                self.imageView.isHidden = true
+                self.avPlayerView.isHidden = false
+                self.avPlayerView.loadVideo(url: processedVideoURL)
+                self.avPlayerView.play()
+            }
+        } progressHandler: { progress in
+            DispatchQueue.main.async {
+                self.descriptionLabel.text = "video processing \(floor(progress*100))%\n\naudio will be played when the processing done"
             }
         }
     }
     
-    private func presentPicker() {
+    @objc func saveVideo() {
+        if let processedVideoURL = processedVideoURL {
+            saveVideoToPhotoLibrary(url: processedVideoURL, completion: {  success, error in
+                if success {
+                    self.presentAlert(title: "video saved!", message: "Saved in photo libraty!")
+                } else {
+                    self.presentAlert(title: "failed to save video", message: String(describing: error))
+                }
+            })
+        }
+    }
+    
+    @objc private func presentPicker() {
         var configuration = PHPickerConfiguration()
         configuration.selectionLimit = 1
         configuration.filter = .videos
@@ -94,6 +116,9 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
                 if let error = error { print("*** error: \(error)") }
                 let start = Date()
                 result.itemProvider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { (url, error) in
+                    DispatchQueue.main.async {
+                        self?.descriptionLabel.text = "video processing...\naudio will be played when the processing done"
+                    }
                     self?.processVideo(videoURL: url as! URL)
                 }
             }
@@ -102,13 +127,15 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
     
     let ciContext = CIContext()
     
-    private func applyProcessingOnVideo(videoURL:URL, _ processingFunction: @escaping ((CIImage) -> CIImage?), _ completion: ((_ err: NSError?, _ processedVideoURL: URL?) -> Void)?) {
+    private func applyProcessingOnVideo(videoURL: URL, processingFunction: @escaping ((CIImage) -> CIImage?), completion: ((_ error: NSError?, _ processedVideoURL: URL?) -> Void)?, progressHandler: ((_ progress: Double) -> Void)?) {
         var frame:Int = 0
         var isFrameRotated = false
         let asset = AVURLAsset(url: videoURL)
+        
         let duration = asset.duration.value
-        let frameRate = asset.preferredRate
-        let totalFrame = frameRate * Float(duration)
+        let frameRate = asset.tracks(withMediaType: AVMediaType.video).first?.nominalFrameRate ?? 30
+        let durationInSeconds = Double(asset.duration.value) / Double(asset.duration.timescale)
+        let totalFrames = Int(durationInSeconds * Double(frameRate))
         let err: NSError = NSError.init(domain: "SemanticImage", code: 999, userInfo: [NSLocalizedDescriptionKey: "Video Processing Failed"])
         guard let writingDestinationUrl: URL  = try? FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true).appendingPathComponent("\(Date())" + ".mp4") else { print("nil"); return}
         
@@ -262,6 +289,9 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
                 autoreleasepool {
                     if let buffer = readerVideoOutput.copyNextSampleBuffer(),let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
                         frame += 1
+                        let progress = Double(frame) / Double(totalFrames)
+                        progressHandler?(progress)
+
                         var ciImage = CIImage(cvPixelBuffer: pixelBuffer)
                         if isFrameRotated {
                             ciImage = ciImage.oriented(CGImagePropertyOrientation.right)
@@ -302,5 +332,26 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
                 }
             }
         }
+    }
+    
+    private func setupView() {
+        view.backgroundColor = .black
+        imageView.frame = view.bounds
+        imageView.contentMode = .scaleAspectFit
+        view.addSubview(imageView)
+        descriptionLabel.frame = CGRect(x: 0, y: view.bounds.height * 0.8, width: view.bounds.width, height: view.bounds.height*0.1)
+        descriptionLabel.textAlignment = .center
+        descriptionLabel.numberOfLines = 2
+        descriptionLabel.text = "select a video using the button above"
+        descriptionLabel.textColor = .white
+        view.addSubview(descriptionLabel)
+        avPlayerView.frame = self.view.bounds
+        view.addSubview(self.avPlayerView)
+        avPlayerView.isHidden = true
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveVideo))
+        let selectButton = UIBarButtonItem(title:"video",style: .plain, target: self, action: #selector(presentPicker))
+
+        navigationItem.rightBarButtonItems = [selectButton,saveButton]
+        
     }
 }

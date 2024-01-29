@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		733161B92B646E8E0042B944 /* AVPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733161B82B646E8E0042B944 /* AVPlayerView.swift */; };
+		73670C712B66E84B00DD7885 /* ViewUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73670C702B66E84B00DD7885 /* ViewUtils.swift */; };
 		73B094592B5BBF140053F9F6 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094582B5BBF140053F9F6 /* AppDelegate.swift */; };
 		73B0945B2B5BBF140053F9F6 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0945A2B5BBF140053F9F6 /* SceneDelegate.swift */; };
 		73B0945D2B5BBF140053F9F6 /* SingleImageViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0945C2B5BBF140053F9F6 /* SingleImageViewController.swift */; };
@@ -17,7 +19,7 @@
 		73B0947A2B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094792B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift */; };
 		73B0947C2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0947B2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift */; };
 		73B094892B5BBF690053F9F6 /* animeganHayao.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */; };
-		73B0948B2B5BF5CC0053F9F6 /* ImageExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */; };
+		73B0948B2B5BF5CC0053F9F6 /* ImageUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0948A2B5BF5CC0053F9F6 /* ImageUtils.swift */; };
 		73B0948D2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */; };
 		73B094912B5CC9090053F9F6 /* VideoProcessingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */; };
 /* End PBXBuildFile section */
@@ -40,6 +42,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		733161B82B646E8E0042B944 /* AVPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlayerView.swift; sourceTree = "<group>"; };
+		73670C702B66E84B00DD7885 /* ViewUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewUtils.swift; sourceTree = "<group>"; };
 		73B094552B5BBF140053F9F6 /* AnimeGANv2Sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AnimeGANv2Sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		73B094582B5BBF140053F9F6 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		73B0945A2B5BBF140053F9F6 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -54,7 +58,7 @@
 		73B094792B5BBF160053F9F6 /* AnimeGANv2SampleUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeGANv2SampleUITests.swift; sourceTree = "<group>"; };
 		73B0947B2B5BBF160053F9F6 /* AnimeGANv2SampleUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimeGANv2SampleUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = animeganHayao.mlmodel; sourceTree = "<group>"; };
-		73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageExtensions.swift; sourceTree = "<group>"; };
+		73B0948A2B5BF5CC0053F9F6 /* ImageUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageUtils.swift; sourceTree = "<group>"; };
 		73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealTimeCameraInferenceViewController.swift; sourceTree = "<group>"; };
 		73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcessingViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -112,7 +116,9 @@
 				73B0945C2B5BBF140053F9F6 /* SingleImageViewController.swift */,
 				73B094902B5CC9090053F9F6 /* VideoProcessingViewController.swift */,
 				73B0948C2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift */,
-				73B0948A2B5BF5CC0053F9F6 /* ImageExtensions.swift */,
+				73B0948A2B5BF5CC0053F9F6 /* ImageUtils.swift */,
+				73670C702B66E84B00DD7885 /* ViewUtils.swift */,
+				733161B82B646E8E0042B944 /* AVPlayerView.swift */,
 				73B094882B5BBF690053F9F6 /* animeganHayao.mlmodel */,
 				73B0945E2B5BBF140053F9F6 /* Main.storyboard */,
 				73B094612B5BBF150053F9F6 /* Assets.xcassets */,
@@ -272,8 +278,10 @@
 			files = (
 				73B0948D2B5C19B30053F9F6 /* RealTimeCameraInferenceViewController.swift in Sources */,
 				73B094912B5CC9090053F9F6 /* VideoProcessingViewController.swift in Sources */,
-				73B0948B2B5BF5CC0053F9F6 /* ImageExtensions.swift in Sources */,
+				73670C712B66E84B00DD7885 /* ViewUtils.swift in Sources */,
+				73B0948B2B5BF5CC0053F9F6 /* ImageUtils.swift in Sources */,
 				73B0945D2B5BBF140053F9F6 /* SingleImageViewController.swift in Sources */,
+				733161B92B646E8E0042B944 /* AVPlayerView.swift in Sources */,
 				73B094592B5BBF140053F9F6 /* AppDelegate.swift in Sources */,
 				73B0945B2B5BBF140053F9F6 /* SceneDelegate.swift in Sources */,
 				73B094892B5BBF690053F9F6 /* animeganHayao.mlmodel in Sources */,

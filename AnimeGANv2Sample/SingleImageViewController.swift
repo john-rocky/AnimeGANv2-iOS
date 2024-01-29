@@ -18,9 +18,14 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
     var resizedCIImage:CIImage!
 
     var imageView = UIImageView()
-    var selectInputButton = UIButton()
-    var videoProcessingButton = UIButton()
-    var realTimeCameraButton = UIButton()
+    var imageButton = CustomButton()
+    var videoButton = CustomButton()
+    var cameraButton = CustomButton()
+    var imageLabel = UILabel()
+    var videoLabel = UILabel()
+    var cameraLabel = UILabel()
+    let largeConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
+
     var saveButton = UIButton()
     var descriptionLabel = UILabel()
     var startTime:Date!
@@ -87,6 +92,9 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
         configuration.selectionLimit = 1
         configuration.filter = .images
         let picker = PHPickerViewController(configuration: configuration)
+        picker.view.subviews.forEach { uiview in
+            uiview.backgroundColor  = .black
+        }
         picker.delegate = self
         self.present(picker, animated: true)
     }
@@ -126,21 +134,9 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
     }
     
     @objc func saveImage() {
-        let image = imageView.image!
+        guard let resizedCIImage = resizedCIImage else { return }
         guard let cgImage = context.createCGImage(resizedCIImage, from: resizedCIImage.extent) else { fatalError("save error")}
         UIImageWriteToSavedPhotosAlbum(UIImage(cgImage: cgImage), self, #selector(imageSaved), nil)
-    }
-    
-    @objc func imageSaved(_ image: UIImage, didFinishSavingWithError error: Error?, contextInfo: UnsafeRawPointer) {
-        if let error = error {
-            let ac = UIAlertController(title: "Save error", message: error.localizedDescription, preferredStyle: .alert)
-            ac.addAction(UIAlertAction(title: "OK", style: .default))
-            present(ac, animated: true)
-        } else {
-            let ac = UIAlertController(title: NSLocalizedString("saved!",value: "saved!", comment: ""), message: NSLocalizedString("Saved in photo library",value: "Saved in photo library", comment: ""), preferredStyle: .alert)
-            ac.addAction(UIAlertAction(title: "OK", style: .default))
-            present(ac, animated: true)
-        }
     }
     
     // MARK: - View
@@ -148,46 +144,60 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
     func upDateResultUI(resultUIImage:UIImage, inferenceTime:TimeInterval) {
         DispatchQueue.main.async { [weak self] in
             self?.imageView.image = resultUIImage
-            self?.descriptionLabel.text = "\(inferenceTime) sec"
+            self?.descriptionLabel.text = "It took \(floor(inferenceTime*1000)/1000) sec to process"
         }
     }
     
     func setupView() {
+        view.backgroundColor = .black
         imageView.frame = CGRect(x: 0, y: 0, width: view.bounds.width, height: view.bounds.height*0.8)
-        selectInputButton.frame = CGRect(x: 0, y: view.bounds.height*0.9, width: view.bounds.width*0.25, height: view.bounds.height*0.1)
-        realTimeCameraButton.frame = CGRect(x: view.bounds.width * 0.25, y: view.bounds.height*0.9, width: view.bounds.width*0.25, height: view.bounds.height*0.1)
-        videoProcessingButton.frame = CGRect(x: view.bounds.width * 0.5, y: view.bounds.height*0.9, width: view.bounds.width*0.25, height: view.bounds.height*0.1)
-        saveButton.frame = CGRect(x: view.bounds.width*0.75, y: view.bounds.height*0.9, width: view.bounds.width*0.25, height: view.bounds.height*0.1)
-        descriptionLabel.frame = CGRect(x: 0, y: view.bounds.height*0.8, width: view.bounds.width, height: view.bounds.height*0.1)
+        imageButton.frame = CGRect(x: view.bounds.width*0.13, y: view.bounds.height*0.83, width: view.bounds.width*0.16, height: view.bounds.width*0.16)
+        videoButton.frame = CGRect(x: view.bounds.width * 0.42, y: view.bounds.height*0.83, width: view.bounds.width*0.16, height: view.bounds.width*0.16)
+
+        cameraButton.frame = CGRect(x: view.bounds.width * 0.71, y: view.bounds.height*0.83, width: view.bounds.width*0.16, height: view.bounds.width*0.16)
+        imageLabel.frame = CGRect(x: imageButton.center.x-view.bounds.width*0.2/2, y: view.bounds.height*0.87, width: view.bounds.width*0.2, height: view.bounds.height*0.1)
+        videoLabel.frame = CGRect(x: videoButton.center.x-view.bounds.width*0.2/2, y: view.bounds.height*0.87, width: view.bounds.width*0.2, height: view.bounds.height*0.1)
+        cameraLabel.frame = CGRect(x: cameraButton.center.x-view.bounds.width*0.2/2, y: view.bounds.height*0.87, width: view.bounds.width*0.2, height: view.bounds.height*0.1)
+        
+        descriptionLabel.frame = CGRect(x: 0, y: view.bounds.height*0.72, width: view.bounds.width, height: view.bounds.height*0.1)
         
         view.addSubview(imageView)
-        view.addSubview(selectInputButton)
-        view.addSubview(videoProcessingButton)
-        view.addSubview(realTimeCameraButton)
-        view.addSubview(saveButton)
+        view.addSubview(imageLabel)
+        view.addSubview(videoLabel)
+        view.addSubview(cameraLabel)
+        view.addSubview(imageButton)
+        view.addSubview(videoButton)
+        view.addSubview(cameraButton)
         view.addSubview(descriptionLabel)
 
         imageView.contentMode = .scaleAspectFit
-        selectInputButton.setImage(UIImage(systemName: "photo"), for: .normal)
-        videoProcessingButton.setImage(UIImage(systemName: "play.rectangle"), for: .normal)
-        realTimeCameraButton.setImage(UIImage(systemName: "camera"), for: .normal)
-        saveButton.setImage(UIImage(systemName: "square.and.arrow.down"), for: .normal)
-        selectInputButton.backgroundColor = .black
-        videoProcessingButton.backgroundColor = .gray
-        realTimeCameraButton.backgroundColor = .black
-        saveButton.backgroundColor = .gray
-        selectInputButton.tintColor = .white
-        videoProcessingButton.tintColor = .white
-        realTimeCameraButton.tintColor = .white
-        saveButton.tintColor = .white
+        imageButton.setImage(UIImage(systemName: "photo",withConfiguration: largeConfig), for: .normal)
+        videoButton.setImage(UIImage(systemName: "play.rectangle",withConfiguration: largeConfig), for: .normal)
+        cameraButton.setImage(UIImage(systemName: "camera",withConfiguration: largeConfig), for: .normal)
         descriptionLabel.textAlignment = .center
         descriptionLabel.numberOfLines = 2
-        descriptionLabel.text = "Core ML model initializing.\nPlease wait few seconds."
+        descriptionLabel.text = "The Core ML model takes a few seconds\n to initialize only on first startup.Please wait."
+        descriptionLabel.textColor = .white
+        imageButton.addTarget(self, action: #selector(presentPicker), for: .touchUpInside)
+        videoButton.addTarget(self, action: #selector(videoProcessingSegue), for: .touchUpInside)
+        cameraButton.addTarget(self, action: #selector(realTimeCameraSegue), for: .touchUpInside)
         
-        selectInputButton.addTarget(self, action: #selector(presentPicker), for: .touchUpInside)
-        videoProcessingButton.addTarget(self, action: #selector(videoProcessingSegue), for: .touchUpInside)
-        realTimeCameraButton.addTarget(self, action: #selector(realTimeCameraSegue), for: .touchUpInside)
-        saveButton.addTarget(self, action: #selector(saveImage), for: .touchUpInside)
+        imageLabel.textAlignment = .center
+        videoLabel.textAlignment = .center
+        cameraLabel.textAlignment = .center
+        imageLabel.text = "Image"
+        videoLabel.text = "Video"
+        cameraLabel.text = "Camera"
+        imageLabel.textColor = .white
+        videoLabel.textColor = .white
+        cameraLabel.textColor = .white
+
+        let saveButton = UIBarButtonItem(barButtonSystemItem: .save, target: self, action: #selector(saveImage))
+        navigationItem.rightBarButtonItem = saveButton
+
+        navigationController?.setNavigationBarHidden(false, animated: true)
+        navigationController?.navigationBar.tintColor = .white
     }
 }
+
 
