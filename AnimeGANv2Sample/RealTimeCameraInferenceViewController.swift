@@ -56,17 +56,20 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     private var isRecording = false
     private var startTime:Date!
     private var recordingStartTime:CMTime?
+    private var processedVideoURL:URL?
     
     // view
     private var imageView = UIImageView()
     private var descriptionLabel = UILabel()
-    private var recordButton = CustomButton()
-    private var switchCameraButton = CustomButton()
-    private var saveButton = CustomButton()
+    private var recordButton = UIButton(type: .system)
+    private var switchCameraButton = UIButton(type: .system)
+    private var saveButton = UIButton(type: .system)
+    private var cancelButton = UIButton(type: .system)
     private var resultImageView = UIImageView()
     private var resultAVPlayerView = AVPlayerView()
     private var photoVideoSegmentControl = UISegmentedControl(items: ["photo","video"])
-    let largeConfig = UIImage.SymbolConfiguration(pointSize: 30, weight: .regular, scale: .default)
+    let largeConfig = UIImage.SymbolConfiguration(pointSize: 50, weight: .regular, scale: .large)
+    let smallConfig = UIImage.SymbolConfiguration(pointSize: 30, weight: .regular, scale: .large)
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -136,14 +139,8 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                 videoWriterAudioInput.markAsFinished()
                 videoWriter.finishWriting { [weak self] in
                     guard let self = self else { return }
-                    let outputURL = self.videoWriter.outputURL
-                    saveVideoToPhotoLibrary(url: outputURL, completion: {  success, error in
-                        if success {
-                            self.presentAlert(title: "video saved!", message: "Saved in photo libraty!")
-                        } else {
-                            self.presentAlert(title: "failed to save video", message: String(describing: error))
-                        }
-                    })
+                    processedVideoURL = self.videoWriter.outputURL
+                    presentAVPlayerView()
                 }
             }
         } else {
@@ -213,24 +210,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         guard let cgImage = ciContext.createCGImage(processedCIImage, from: processedCIImage.extent) else { fatalError("save error")}
         let uiImage = UIImage(cgImage: cgImage)
         processedUIImage = uiImage
-        DispatchQueue.main.async {
-            AudioServicesPlaySystemSound(1108)
-            self.resultImageView.image = uiImage
-            self.resultImageView.isHidden = false
-            self.saveButton.isHidden = false
-        }
-    }
-    
-    @objc private func saveProcessedImageInPhotoLibrary() {
-        guard let processedUIImage = processedUIImage else {
-            presentAlert(title: "saving failed", message: "")
-            return
-        }
-        UIImageWriteToSavedPhotosAlbum(processedUIImage, self, #selector(imageSaved), nil)
-        DispatchQueue.main.async { [weak self] in
-            self?.resultImageView.isHidden = true
-            self?.saveButton.isHidden = true
-        }
+        updateTakingPhotoUI(processedUIImage: uiImage)
     }
     
     private func writeProcessedVideoFrame(processedCIImage: CIImage, presentationTimeStamp: CMTime) {
@@ -405,6 +385,53 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         switchUITo(mode: cameraMode)
     }
     
+    @objc private func saveProcessedAsset() {
+        switch cameraMode {
+        case .photo:
+            guard let processedUIImage = processedUIImage else {
+                presentAlert(title: "saving failed", message: "")
+                return
+            }
+            UIImageWriteToSavedPhotosAlbum(processedUIImage, self, #selector(imageSaved), nil)
+            DispatchQueue.main.async { [weak self] in
+                self?.resultImageView.isHidden = true
+                self?.saveButton.isHidden = true
+            }
+        case .video:
+            guard let processedVideoURL = processedVideoURL else { fatalError() }
+            saveVideoToPhotoLibrary(url: processedVideoURL, completion: {  success, error in
+                if success {
+                    self.setupVideoWriter()
+                    self.presentAlert(title: "video saved!", message: "Saved in photo libraty!")
+                    DispatchQueue.main.async { [weak self] in
+                        self?.resultAVPlayerView.isHidden = true
+                        self?.saveButton.isHidden = true
+                    }
+                } else {
+                    self.presentAlert(title: "failed to save video", message: String(describing: error))
+                }
+            })
+        }
+    }
+    
+    @objc func cancelButtonTapped() {
+
+        DispatchQueue.main.async { [weak self] in
+            self?.cancelButton.isHidden = true
+            self?.saveButton.isHidden = true
+            guard let cameraMode = self?.cameraMode else { return }
+            switch cameraMode {
+            case .photo:
+                self?.resultImageView.isHidden = true
+            case .video:
+                self?.resultAVPlayerView.pause()
+                self?.resultAVPlayerView.isHidden = true
+            }
+        }
+    }
+    
+    
+
     // MARK: -View
     private func setupView() {
         view.backgroundColor = .black
@@ -412,21 +439,34 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         resultImageView.frame = view.bounds
         resultImageView.backgroundColor = .black
         descriptionLabel.frame = CGRect(x: 0, y: view.center.y, width: view.bounds.width, height: 100)
-        recordButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 200, width: 100, height: 100)
-        recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: largeConfig), for: .normal)
-        saveButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 200, width: 100, height: 100)
-        saveButton.setImage(UIImage(systemName: "square.and.arrow.down",withConfiguration: largeConfig), for: .normal)
+        recordButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 250, width: 100, height: 100)
+        recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        recordButton.tintColor = .white
+        saveButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 250, width: 100, height: 100)
+        saveButton.setImage(UIImage(systemName: "checkmark.circle.fill",withConfiguration: largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        saveButton.tintColor = .white
         saveButton.isHidden = true
-        switchCameraButton.frame = CGRect(x: view.bounds.maxX - 100, y: 100, width: 100, height: 100)
-        switchCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath.camera",withConfiguration: largeConfig), for: .normal)
-        photoVideoSegmentControl.frame =  CGRect(x: view.center.x - 50, y: view.bounds.maxY - 260, width: 100, height: 40)
+        switchCameraButton.frame = CGRect(x: view.bounds.maxX - 100, y: recordButton.center.y - 50, width: 100, height: 100)
+        switchCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath.camera.fill",withConfiguration: smallConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        switchCameraButton.tintColor = .white
+        cancelButton.setTitle("cancel", for: .normal)
+        cancelButton.setTitleColor(.white, for: .normal)
+        cancelButton.frame = CGRect(x: saveButton.frame.minX - 120, y: saveButton.center.y - 20, width: 100, height: 40)
+        cancelButton.addTarget(self, action: #selector(cancelButtonTapped), for: .touchUpInside)
+        cancelButton.isHidden = true
+        photoVideoSegmentControl.frame =  CGRect(x: view.center.x - 50, y: recordButton.frame.maxY + 20, width: 100, height: 40)
+        resultAVPlayerView.frame = view.bounds
+        resultAVPlayerView.isHidden = true
+
         view.addSubview(imageView)
         view.addSubview(descriptionLabel)
         view.addSubview(recordButton)
-        view.addSubview(saveButton)
         view.addSubview(switchCameraButton)
         view.addSubview(photoVideoSegmentControl)
         view.addSubview(resultImageView)
+        view.addSubview(resultAVPlayerView)
+        view.addSubview(saveButton)
+        view.addSubview(cancelButton)
 
         imageView.contentMode = .scaleAspectFit
         resultImageView.contentMode = .scaleAspectFit
@@ -436,7 +476,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         descriptionLabel.numberOfLines = 2
         descriptionLabel.textAlignment = .center
         recordButton.addTarget(self, action: #selector(recordButtonTapped), for: .touchUpInside)
-        saveButton.addTarget(self, action: #selector(saveProcessedImageInPhotoLibrary), for: .touchUpInside)
+        saveButton.addTarget(self, action: #selector(saveProcessedAsset), for: .touchUpInside)
         switchCameraButton.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
         photoVideoSegmentControl.addTarget(self, action: #selector(segmentControlValueChanged), for: .valueChanged)
         photoVideoSegmentControl.selectedSegmentIndex = 0
@@ -457,55 +497,36 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             }
         }
     }
+    
+    private func updateTakingPhotoUI(processedUIImage:UIImage) {
+        DispatchQueue.main.async {
+            AudioServicesPlaySystemSound(1108)
+            self.resultImageView.image = processedUIImage
+            self.resultImageView.isHidden = false
+            self.saveButton.isHidden = false
+        }
+    }
+    
+    private func presentAVPlayerView() {
+        guard let processedVideoURL = processedVideoURL else { fatalError() }
+        DispatchQueue.main.async { [weak self] in
+            self?.resultAVPlayerView.loadVideo(url: processedVideoURL)
+            self?.resultAVPlayerView.isHidden = false
+            self?.saveButton.isHidden = false
+            self?.cancelButton.isHidden = false
+            self?.resultAVPlayerView.play()
+        }
+    }
        
     private func switchUITo(mode: CameraMode) {
         DispatchQueue.main.async { [weak self] in
             switch mode {
             case .photo:
-                self?.recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
+                self?.recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: self?.largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
             case .video:
-                self?.recordButton.setImage(UIImage(systemName: "video.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
+                self?.recordButton.setImage(UIImage(systemName: "video.circle.fill",withConfiguration: self?.largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
             }
         }
     }
-    // completion patern
-    
-    //    private func inference(pixelBuffer: CVPixelBuffer) {
-    //        guard let coreMLRequest = coreMLRequest else {
-    //            processing = false
-    //            return
-    //        }
-    //        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer,orientation: .right, options: [:])
-    //        do {
-    //            try handler.perform([coreMLRequest])
-    //        } catch {
-    //            print("Vision error: \(error.localizedDescription)")
-    //            processing = false
-    //
-    //        }
-    //    }
-    
-    //    func coreMLRequestCompletionHandler(request:VNRequest?, error:Error?) {
-    //        guard let result:VNPixelBufferObservation = coreMLRequest?.results?.first as? VNPixelBufferObservation else {
-    //            processing = false
-    //            return }
-    //        let end = Date()
-    //        //        let inferenceTime = end.timeIntervalSince(startTime)
-    //        let pixelBuffer:CVPixelBuffer = result.pixelBuffer
-    //        let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
-    //        let resizedCIImage = resultCIImage.resize(as: videoSize)
-    //        let resultUIImage = UIImage(ciImage: resizedCIImage)
-    //        if isRecording {
-    //            writeProcessedVideoFrame(processedCIImage: resizedCIImage, sampleBuffer: currentSampleBuffer)
-    //        }
-    //
-    //        DispatchQueue.main.async { [weak self] in
-    //            self?.imageView.image = resultUIImage
-    //        }
-    //        processing = false
-    //
-    //    }
-    
-    
 }
 

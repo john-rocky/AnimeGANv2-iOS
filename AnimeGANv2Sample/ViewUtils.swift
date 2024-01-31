@@ -26,29 +26,8 @@ extension UIViewController {
     }
 }
 
-class CustomButton: UIButton {
-
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        configureButton()
-    }
-    
-    required init?(coder aDecoder: NSCoder) {
-        super.init(coder: aDecoder)
-        configureButton()
-    }
-
-
-    override var isHighlighted: Bool {
-        didSet {
-            if isHighlighted {
-                animateButton()
-//                triggerHapticFeedback()
-            }
-        }
-    }
-
-    private func animateButton() {
+extension UIButton {
+    func animateButton() {
         UIView.animate(withDuration: 0.1, animations: {
             self.transform = CGAffineTransform(scaleX: 0.96, y: 0.96)
         }) { (_) in
@@ -58,21 +37,9 @@ class CustomButton: UIButton {
         }
     }
 
-    private func triggerHapticFeedback() {
+    func triggerHapticFeedback() {
         let generator = UIImpactFeedbackGenerator(style: .heavy)
         generator.impactOccurred()
-    }
-    
-    private func configureButton() {
-        var config = UIButton.Configuration.filled()
-        config.imagePlacement = .top
-        config.imagePadding = 10
-        config.baseBackgroundColor = .clear
-        self.configuration = config
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
     }
 }
 

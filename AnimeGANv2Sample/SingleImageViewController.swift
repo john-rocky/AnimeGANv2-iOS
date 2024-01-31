@@ -18,9 +18,9 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
     private var resizedCIImage:CIImage!
 
     private var imageView = UIImageView()
-    private var imageButton = CustomButton()
-    private var videoButton = CustomButton()
-    private var cameraButton = CustomButton()
+    private var imageButton = UIButton(type: .system)
+    private var videoButton = UIButton(type: .system)
+    private var cameraButton = UIButton(type: .system)
     private var imageLabel = UILabel()
     private var videoLabel = UILabel()
     private var cameraLabel = UILabel()
@@ -171,9 +171,13 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
         view.addSubview(descriptionLabel)
 
         imageView.contentMode = .scaleAspectFit
-        imageButton.setImage(UIImage(systemName: "photo",withConfiguration: largeConfig), for: .normal)
-        videoButton.setImage(UIImage(systemName: "play.rectangle",withConfiguration: largeConfig), for: .normal)
-        cameraButton.setImage(UIImage(systemName: "camera",withConfiguration: largeConfig), for: .normal)
+        imageButton.setImage(UIImage(systemName: "photo",withConfiguration: largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        videoButton.setImage(UIImage(systemName: "play.rectangle",withConfiguration: largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        cameraButton.setImage(UIImage(systemName: "camera",withConfiguration: largeConfig)?.withRenderingMode(.alwaysTemplate), for: .normal)
+        imageButton.tintColor = .white
+        videoButton.tintColor = .white
+        cameraButton.tintColor = .white
+
         descriptionLabel.textAlignment = .center
         descriptionLabel.numberOfLines = 2
         descriptionLabel.text = "The Core ML model takes a few seconds\n to initialize only on first startup.Please wait."
