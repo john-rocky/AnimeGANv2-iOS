@@ -12,8 +12,10 @@ Example of using the model on iOS.
 ### Real-Time Camera
 
 # Usage
-1,Clone repo.
+1,Clone this repo.
+
 2,Change team of Xcode to your own.
+
 3,Run on Xcode.
 
 # Original model repo.
