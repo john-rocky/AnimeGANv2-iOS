@@ -46,8 +46,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "128"
-            endingLineNumber = "128"
+            startingLineNumber = "159"
+            endingLineNumber = "159"
             landmarkName = "captureOutput(_:didOutput:from:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -62,8 +62,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "67"
-            endingLineNumber = "67"
+            startingLineNumber = "74"
+            endingLineNumber = "74"
             landmarkName = "viewDidLoad()"
             landmarkType = "7">
          </BreakpointContent>
@@ -78,10 +78,10 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "175"
-            endingLineNumber = "175"
-            landmarkName = "captureOutput(_:didOutput:from:)"
-            landmarkType = "7">
+            startingLineNumber = "209"
+            endingLineNumber = "209"
+            landmarkName = "RealTimeCameraInferenceViewController"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -94,8 +94,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "101"
-            endingLineNumber = "101"
+            startingLineNumber = "132"
+            endingLineNumber = "132"
             landmarkName = "recordVideo()"
             landmarkType = "7">
          </BreakpointContent>
@@ -110,8 +110,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "103"
-            endingLineNumber = "103"
+            startingLineNumber = "134"
+            endingLineNumber = "134"
             landmarkName = "recordVideo()"
             landmarkType = "7">
          </BreakpointContent>
@@ -126,8 +126,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "104"
-            endingLineNumber = "104"
+            startingLineNumber = "135"
+            endingLineNumber = "135"
             landmarkName = "recordVideo()"
             landmarkType = "7">
          </BreakpointContent>
@@ -142,8 +142,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "209"
-            endingLineNumber = "209"
+            startingLineNumber = "262"
+            endingLineNumber = "262"
             landmarkName = "updatePreview(processedCIImage:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -158,8 +158,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "199"
-            endingLineNumber = "199"
+            startingLineNumber = "252"
+            endingLineNumber = "252"
             landmarkName = "writeProcessedVideoFrame(processedCIImage:presentationTimeStamp:)"
             landmarkType = "7">
             <Locations>
@@ -206,8 +206,8 @@
             filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "171"
-            endingLineNumber = "171"
+            startingLineNumber = "205"
+            endingLineNumber = "205"
             landmarkName = "captureOutput(_:didOutput:from:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -238,8 +238,8 @@
             filePath = "AnimeGANv2Sample/AVPlayerView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "186"
-            endingLineNumber = "186"
+            startingLineNumber = "192"
+            endingLineNumber = "192"
             landmarkName = "updateSeekSlider(_:)"
             landmarkType = "7">
          </BreakpointContent>
@@ -254,10 +254,10 @@
             filePath = "AnimeGANv2Sample/AVPlayerView.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "185"
-            endingLineNumber = "185"
-            landmarkName = "updateSeekSlider(_:)"
-            landmarkType = "7">
+            startingLineNumber = "191"
+            endingLineNumber = "191"
+            landmarkName = "AVPlayerView"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -352,8 +352,8 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "118"
             endingLineNumber = "118"
-            landmarkName = "AVPlayerView"
-            landmarkType = "3">
+            landmarkName = "viewTapped()"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -385,6 +385,54 @@
             startingLineNumber = "46"
             endingLineNumber = "46"
             landmarkName = "viewDidLoad()"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DF81A165-AAFB-4974-9615-1B53407FEBC9"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "211"
+            endingLineNumber = "211"
+            landmarkName = "takePicture(processedCIImage:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "D88AA9E7-AC11-405B-A018-2B40B1F0A23A"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "401"
+            endingLineNumber = "401"
+            landmarkName = "segmentControlValueChanged(sender:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "44B5B4E9-9DF5-41CB-86A3-58773D3DBD8F"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "AnimeGANv2Sample/RealTimeCameraInferenceViewController.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "403"
+            endingLineNumber = "403"
+            landmarkName = "segmentControlValueChanged(sender:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

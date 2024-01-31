@@ -11,24 +11,24 @@ import PhotosUI
 import AVKit
 
 class SingleImageViewController: UIViewController, PHPickerViewControllerDelegate {
-    var vnCoreMLModel: VNCoreMLModel!
-    var coreMLRequest: VNCoreMLRequest!
-    let context = CIContext()
-    var originalCIImageSize:CGSize!
-    var resizedCIImage:CIImage!
+    private var vnCoreMLModel: VNCoreMLModel!
+    private  var coreMLRequest: VNCoreMLRequest!
+    private let context = CIContext()
+    private var originalCIImageSize:CGSize!
+    private var resizedCIImage:CIImage!
 
-    var imageView = UIImageView()
-    var imageButton = CustomButton()
-    var videoButton = CustomButton()
-    var cameraButton = CustomButton()
-    var imageLabel = UILabel()
-    var videoLabel = UILabel()
-    var cameraLabel = UILabel()
-    let largeConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
+    private var imageView = UIImageView()
+    private var imageButton = CustomButton()
+    private var videoButton = CustomButton()
+    private var cameraButton = CustomButton()
+    private var imageLabel = UILabel()
+    private var videoLabel = UILabel()
+    private var cameraLabel = UILabel()
+    private let largeConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .default)
 
-    var saveButton = UIButton()
-    var descriptionLabel = UILabel()
-    var startTime:Date!
+    private var saveButton = UIButton()
+    private var descriptionLabel = UILabel()
+    private var startTime:Date!
 
     // MARK: - App Lifecycle
     override func viewDidLoad() {

@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-extension UIViewController {
+extension UIViewController {    
     func presentAlert(title: String, message: String) {
         DispatchQueue.main.async { [weak self] in
             let ac = UIAlertController(title: NSLocalizedString(title,value: title, comment: ""), message: NSLocalizedString(message,value: message, comment: ""), preferredStyle: .alert)
@@ -74,4 +74,18 @@ class CustomButton: UIButton {
     override func layoutSubviews() {
         super.layoutSubviews()
     }
+}
+
+
+extension UIView {
+    func pulseAnimation() {
+        let pulse = CABasicAnimation(keyPath: "transform.scale")
+        pulse.duration = 0.2
+        pulse.fromValue = 1.0
+        pulse.toValue = 1.2
+        pulse.autoreverses = true
+        pulse.repeatCount = 2
+        self.layer.add(pulse, forKey: nil)
+    }
+
 }

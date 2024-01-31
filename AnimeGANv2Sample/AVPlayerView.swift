@@ -156,6 +156,12 @@ class AVPlayerView: UIView {
         }
 
         NotificationCenter.default.addObserver(self, selector: #selector(videoDidEnd), name: .AVPlayerItemDidPlayToEndTime, object: player?.currentItem)
+        if let duration = player?.currentItem?.asset.duration {
+            let durationText = formatTimeForDisplay(duration)
+            timeLabel.text = "00:00 / \(durationText)"
+        } else {
+            timeLabel.text = "00:00 / 00:00"
+        }
     }
 
     @objc private func togglePlayPause() {

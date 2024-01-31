@@ -9,8 +9,9 @@ import UIKit
 import Vision
 import AVFoundation
 import Photos
+import AudioToolbox
 
-class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate {
+class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate, AVCapturePhotoCaptureDelegate {
     
     var vnCoreMLModel: VNCoreMLModel! {
         didSet {
@@ -23,11 +24,13 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     private var coreMLRequest: VNCoreMLRequest?
+    private var prefferedImageOrientation: CGImagePropertyOrientation = .right
     
     // capture
     private var captureSession = AVCaptureSession()
     private var captureVideoOutput = AVCaptureVideoDataOutput()
     private let captureAudioOutput = AVCaptureAudioDataOutput()
+    private var capturePhotoOutput = AVCapturePhotoOutput()
     
     private enum CameraMode {
         case photo
@@ -38,6 +41,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     
     // take a photo
     private var takingPhoto = false
+    private var processedUIImage:UIImage?
     
     // video writing
     private var videoWriter:AVAssetWriter!
@@ -58,17 +62,20 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     private var descriptionLabel = UILabel()
     private var recordButton = CustomButton()
     private var switchCameraButton = CustomButton()
+    private var saveButton = CustomButton()
+    private var resultImageView = UIImageView()
+    private var resultAVPlayerView = AVPlayerView()
     private var photoVideoSegmentControl = UISegmentedControl(items: ["photo","video"])
     let largeConfig = UIImage.SymbolConfiguration(pointSize: 30, weight: .regular, scale: .default)
 
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
-        setupCaptureSession() // setup caputure session
+        setupCaptureSession()
         setupVideoWriter()
     }
     
-    private func predict(pixelBuffer: CVPixelBuffer)->CIImage? {
+    private func inference(pixelBuffer: CVPixelBuffer)->CIImage? {
         guard let coreMLRequest = coreMLRequest else {
             processing = false
             return nil
@@ -92,10 +99,34 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     
+    private func inference(ciImage: CIImage)->CIImage? {
+        guard let coreMLRequest = coreMLRequest else {
+            processing = false
+            return nil
+        }
+        let handler = VNImageRequestHandler(ciImage: ciImage,orientation: prefferedImageOrientation, options: [:])
+        do {
+            try handler.perform([coreMLRequest])
+            guard let result:VNPixelBufferObservation = coreMLRequest.results?.first as? VNPixelBufferObservation else {
+                processing = false
+                return nil}
+            let end = Date()
+            let inferenceTime = end.timeIntervalSince(startTime)
+            print(inferenceTime)
+            let pixelBuffer:CVPixelBuffer = result.pixelBuffer
+            let resultCIImage = CIImage(cvPixelBuffer: pixelBuffer)
+            let resizedCIImage = resultCIImage.resize(as: CGSize(width: ciImage.extent.size.height,height: ciImage.extent.size.width))
+            return resizedCIImage
+        } catch {
+            print("Vision error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
     // MARK: -Video
     
     private func shootPhoto() {
-        
+        takingPhoto = true
     }
     
     private func recordVideo() {
@@ -137,22 +168,25 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) { // this is a video frame
                 currentSampleBuffer = sampleBuffer
                 startTime = Date()
-                guard let processedCIImage = predict(pixelBuffer: pixelBuffer) else {
+                guard let processedCIImage = inference(pixelBuffer: pixelBuffer) else {
                     return
                 }
                 
                 // Update preview
                 updatePreview(processedCIImage: processedCIImage)
                 
-                if takingPhoto {
-                    takingPhoto = false
-                    
-                }
-                
-                if isRecording {
-                    
-                    let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
-                    writeProcessedVideoFrame(processedCIImage: processedCIImage, presentationTimeStamp: presentationTimeStamp)
+                switch cameraMode {
+                case .photo:
+                    if takingPhoto {
+                        takingPhoto = false
+                        takePicture(processedCIImage: processedCIImage)
+                    }
+
+                case .video:
+                    if isRecording {
+                        let presentationTimeStamp = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                        writeProcessedVideoFrame(processedCIImage: processedCIImage, presentationTimeStamp: presentationTimeStamp)
+                    }
                 }
             }
             processing = false
@@ -174,10 +208,29 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
         }
     }
     
-    private func saveProcessedImageInPhotoLibrary(processedCIImage: CIImage) {
+    func takePicture(processedCIImage: CIImage) {
+
         guard let cgImage = ciContext.createCGImage(processedCIImage, from: processedCIImage.extent) else { fatalError("save error")}
         let uiImage = UIImage(cgImage: cgImage)
-        UIImageWriteToSavedPhotosAlbum(uiImage, self, #selector(imageSaved), nil)
+        processedUIImage = uiImage
+        DispatchQueue.main.async {
+            AudioServicesPlaySystemSound(1108)
+            self.resultImageView.image = uiImage
+            self.resultImageView.isHidden = false
+            self.saveButton.isHidden = false
+        }
+    }
+    
+    @objc private func saveProcessedImageInPhotoLibrary() {
+        guard let processedUIImage = processedUIImage else {
+            presentAlert(title: "saving failed", message: "")
+            return
+        }
+        UIImageWriteToSavedPhotosAlbum(processedUIImage, self, #selector(imageSaved), nil)
+        DispatchQueue.main.async { [weak self] in
+            self?.resultImageView.isHidden = true
+            self?.saveButton.isHidden = true
+        }
     }
     
     private func writeProcessedVideoFrame(processedCIImage: CIImage, presentationTimeStamp: CMTime) {
@@ -229,7 +282,6 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             if captureSession.canAddOutput(captureVideoOutput) {
                 captureSession.addOutput(captureVideoOutput)
             }
-            
             // audio input
             if let audioDevice = AVCaptureDevice.default(for: .audio),
                let audioInput = try? AVCaptureDeviceInput(device: audioDevice) {
@@ -315,17 +367,24 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             return false
         }) as? AVCaptureDeviceInput {
             captureSession.removeInput(currentCameraInput)
-
+            
             let newCameraPosition: AVCaptureDevice.Position = (currentCameraInput.device.position == .back) ? .front : .back
+            prefferedImageOrientation = (currentCameraInput.device.position == .back) ?  .rightMirrored : .right
+
             guard let newCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newCameraPosition) else {
                 captureSession.commitConfiguration()
                 return
             }
-
+            
             do {
                 let newCameraInput = try AVCaptureDeviceInput(device: newCameraDevice)
                 if captureSession.canAddInput(newCameraInput) {
                     captureSession.addInput(newCameraInput)
+//                    if let videoOutput = captureSession.outputs.first(where: { $0 is AVCaptureVideoDataOutput }) as? AVCaptureVideoDataOutput,
+//                       let connection = videoOutput.connection(with: .video),
+//                       connection.isVideoMirroringSupported {
+//                        connection.isVideoMirrored = (newCameraPosition == .front)
+//                    }
                 }
             } catch {
                 print("Error adding new camera input: \(error)")
@@ -333,12 +392,12 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                 return
             }
         }
-
+        
         captureSession.commitConfiguration()
     }
     
     @objc func segmentControlValueChanged(sender: UISegmentedControl) {
-        if sender.tag == 0 { // photo
+        if sender.selectedSegmentIndex == 0 { // photo
             cameraMode = .photo
         } else { // video
             cameraMode = .video
@@ -350,24 +409,37 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
     private func setupView() {
         view.backgroundColor = .black
         imageView.frame = view.bounds
+        resultImageView.frame = view.bounds
+        resultImageView.backgroundColor = .black
         descriptionLabel.frame = CGRect(x: 0, y: view.center.y, width: view.bounds.width, height: 100)
         recordButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 200, width: 100, height: 100)
+        recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: largeConfig), for: .normal)
+        saveButton.frame = CGRect(x: view.center.x - 50, y: view.bounds.maxY - 200, width: 100, height: 100)
+        saveButton.setImage(UIImage(systemName: "square.and.arrow.down",withConfiguration: largeConfig), for: .normal)
+        saveButton.isHidden = true
         switchCameraButton.frame = CGRect(x: view.bounds.maxX - 100, y: 100, width: 100, height: 100)
         switchCameraButton.setImage(UIImage(systemName: "arrow.triangle.2.circlepath.camera",withConfiguration: largeConfig), for: .normal)
         photoVideoSegmentControl.frame =  CGRect(x: view.center.x - 50, y: view.bounds.maxY - 260, width: 100, height: 40)
         view.addSubview(imageView)
         view.addSubview(descriptionLabel)
         view.addSubview(recordButton)
+        view.addSubview(saveButton)
         view.addSubview(switchCameraButton)
         view.addSubview(photoVideoSegmentControl)
-        
+        view.addSubview(resultImageView)
+
         imageView.contentMode = .scaleAspectFit
+        resultImageView.contentMode = .scaleAspectFit
+        resultImageView.isHidden = true
+        
         descriptionLabel.text = "Core ML model is initializing./n please wait a few seconds..."
         descriptionLabel.numberOfLines = 2
         descriptionLabel.textAlignment = .center
         recordButton.addTarget(self, action: #selector(recordButtonTapped), for: .touchUpInside)
+        saveButton.addTarget(self, action: #selector(saveProcessedImageInPhotoLibrary), for: .touchUpInside)
         switchCameraButton.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
         photoVideoSegmentControl.addTarget(self, action: #selector(segmentControlValueChanged), for: .valueChanged)
+        photoVideoSegmentControl.selectedSegmentIndex = 0
     }
     
     private func updateRecordingUI() {
@@ -391,10 +463,8 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             switch mode {
             case .photo:
                 self?.recordButton.setImage(UIImage(systemName: "camera.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
-                self?.switchCameraButton.isHidden = false
             case .video:
                 self?.recordButton.setImage(UIImage(systemName: "video.circle.fill",withConfiguration: self?.largeConfig), for: .normal)
-                self?.switchCameraButton.isHidden = true
             }
         }
     }

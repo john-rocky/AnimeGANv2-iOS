@@ -27,7 +27,6 @@ class VideoProcessingViewController: UIViewController, PHPickerViewControllerDel
     var descriptionLabel = UILabel()
     var imageView = UIImageView()
     var avPlayerView = AVPlayerView()
-    var videoButton = UIButton()
     
     override func viewDidLoad() {
         super.viewDidLoad()
