@@ -37,13 +37,13 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
               let ciImage = CIImage(image: sampleUIImage) else { return }
         originalCIImageSize = ciImage.extent.size
         imageView.image = sampleUIImage
+        setupView()
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             self?.setupCoreMLRequest()
             self?.startTime = Date()
             self?.inference(ciImage:ciImage)
         }
-        setupView()
     }
 
     // MARK: - ML things
@@ -56,6 +56,15 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
             coreMLRequest.imageCropAndScaleOption = .scaleFill
             self.vnCoreMLModel = vnCoreMLModel
             self.coreMLRequest = coreMLRequest
+            DispatchQueue.main.async { [weak self] in
+                self?.imageButton.isHidden = false
+                self?.videoButton.isHidden = false
+                self?.cameraButton.isHidden = false
+                self?.imageLabel.isHidden = false
+                self?.videoLabel.isHidden = false
+                self?.cameraLabel.isHidden = false
+
+            }
         } catch let error {
             fatalError(error.localizedDescription)
         }
@@ -201,6 +210,14 @@ class SingleImageViewController: UIViewController, PHPickerViewControllerDelegat
 
         navigationController?.setNavigationBarHidden(false, animated: true)
         navigationController?.navigationBar.tintColor = .white
+        
+        imageButton.isHidden = true
+        videoButton.isHidden = true
+        cameraButton.isHidden = true
+        imageLabel.isHidden = true
+        videoLabel.isHidden = true
+        cameraLabel.isHidden = true
+
     }
 }
 

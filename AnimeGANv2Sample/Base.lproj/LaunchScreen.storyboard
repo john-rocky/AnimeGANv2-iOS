@@ -17,17 +17,17 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="sample" translatesAutoresizingMaskIntoConstraints="NO" id="qgP-DN-Ash">
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="my_photo" translatesAutoresizingMaskIntoConstraints="NO" id="66y-nV-64P">
                                 <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                             </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                         <constraints>
-                            <constraint firstAttribute="bottom" secondItem="qgP-DN-Ash" secondAttribute="bottom" id="BKe-dg-Y9Z"/>
-                            <constraint firstItem="qgP-DN-Ash" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="QBL-UD-MAm"/>
-                            <constraint firstItem="qgP-DN-Ash" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="j0c-hm-Vik"/>
-                            <constraint firstItem="qgP-DN-Ash" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="z93-Ij-ZKP"/>
+                            <constraint firstItem="66y-nV-64P" firstAttribute="top" secondItem="Ze5-6b-2t3" secondAttribute="top" id="Chj-g6-tw5"/>
+                            <constraint firstItem="66y-nV-64P" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="DGc-Xg-V26"/>
+                            <constraint firstAttribute="bottom" secondItem="66y-nV-64P" secondAttribute="bottom" id="FyF-bU-uEo"/>
+                            <constraint firstItem="66y-nV-64P" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="Ldj-YZ-eLa"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -37,7 +37,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="sample" width="512" height="683"/>
+        <image name="my_photo" width="1024" height="1024"/>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
