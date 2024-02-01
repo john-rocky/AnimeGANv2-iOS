@@ -408,6 +408,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                     DispatchQueue.main.async { [weak self] in
                         self?.resultAVPlayerView.isHidden = true
                         self?.saveButton.isHidden = true
+                        self?.cancelButton.isHidden = true
                     }
                 } else {
                     self.presentAlert(title: "failed to save video", message: String(describing: error))
