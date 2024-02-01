@@ -22,9 +22,9 @@
 		</dict>
 	</dict>
 	<key>UILaunchScreen</key>
-    <dict>
-        <key>UIImageName</key>
-        <string>my_photo</string>
-    </dict>
+	<dict>
+		<key>UIImageName</key>
+		<string>my_photo</string>
+	</dict>
 </dict>
 </plist>

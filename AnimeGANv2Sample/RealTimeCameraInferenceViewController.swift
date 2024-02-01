@@ -107,7 +107,7 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             processing = false
             return nil
         }
-        let handler = VNImageRequestHandler(ciImage: ciImage,orientation: prefferedImageOrientation, options: [:])
+        let handler = VNImageRequestHandler(ciImage: ciImage,orientation: .downMirrored, options: [:])
         do {
             try handler.perform([coreMLRequest])
             guard let result:VNPixelBufferObservation = coreMLRequest.results?.first as? VNPixelBufferObservation else {
@@ -349,7 +349,6 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
             captureSession.removeInput(currentCameraInput)
             
             let newCameraPosition: AVCaptureDevice.Position = (currentCameraInput.device.position == .back) ? .front : .back
-            prefferedImageOrientation = (currentCameraInput.device.position == .back) ?  .rightMirrored : .right
 
             guard let newCameraDevice = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: newCameraPosition) else {
                 captureSession.commitConfiguration()
@@ -360,11 +359,14 @@ class RealTimeCameraInferenceViewController: UIViewController, AVCaptureVideoDat
                 let newCameraInput = try AVCaptureDeviceInput(device: newCameraDevice)
                 if captureSession.canAddInput(newCameraInput) {
                     captureSession.addInput(newCameraInput)
-//                    if let videoOutput = captureSession.outputs.first(where: { $0 is AVCaptureVideoDataOutput }) as? AVCaptureVideoDataOutput,
-//                       let connection = videoOutput.connection(with: .video),
-//                       connection.isVideoMirroringSupported {
-//                        connection.isVideoMirrored = (newCameraPosition == .front)
-//                    }
+                    if let videoOutput = captureSession.outputs.first(where: { $0 is AVCaptureVideoDataOutput }) as? AVCaptureVideoDataOutput,
+                       let connection = videoOutput.connection(with: .video) {
+                        if connection.isVideoMirroringSupported, connection.isVideoOrientationSupported {
+                           connection.videoOrientation = .landscapeRight
+                         connection.isVideoMirrored = (newCameraPosition == .front)
+                     }
+
+                    }
                 }
             } catch {
                 print("Error adding new camera input: \(error)")
